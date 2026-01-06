@@ -10,9 +10,55 @@ require_once 'f_favoritos.php';
 
 $usuario_id = $_SESSION['usuario_id'] ?? null;
 
-// Obtener favoritos si hay usuario logueado
-$favoritosIds = $usuario_id ? obtenerIdsFavoritos($usuario_id) : [];
+// Función auxiliar para renderizar la tarjeta CORRECTAMENTE en el INDEX
+function renderizarTarjetaInicio($producto, $favoritosIds) {
+    // CORRECCIÓN: Verificar primero si hay imagen para evitar el error de "Passing null"
+    $nombreImagen = !empty($producto['imagen']) ? $producto['imagen'] : 'producto-default.jpg';
+    
+    // Construir ruta (para index.php es 'img_productos/')
+    $rutaImagen = 'img_productos/' . htmlspecialchars($nombreImagen);
 
+    // Validación extra: si el archivo no existe físicamente, poner default
+    // (Solo verificamos si no es ya la default para ahorrar recursos)
+    if ($nombreImagen !== 'producto-default.jpg' && !file_exists(__DIR__ . '/../../img_productos/' . $nombreImagen)) {
+        $rutaImagen = 'img_productos/producto-default.jpg';
+    }
+
+    // Lógica para el botón de favoritos
+    $esFavorito = in_array($producto['id'], $favoritosIds);
+    $claseIcono = $esFavorito ? 'fa-solid text-danger' : 'fa-regular';
+
+    ?>
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="position-relative">
+                <img src="<?php echo $rutaImagen; ?>" 
+                     class="card-img-top" 
+                     style="height: 250px; object-fit: cover;" 
+                     alt="<?php echo htmlspecialchars($producto['nombre']); ?>">
+                
+                <button type="button" 
+                        class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm btn-fav" 
+                        data-id="<?php echo $producto['id']; ?>"
+                        title="Añadir a favoritos"
+                        style="z-index: 10;">
+                    <i id="icono-fav-<?php echo $producto['id']; ?>" class="<?php echo $claseIcono; ?> fa-heart"></i>
+                </button>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-truncate"><?php echo htmlspecialchars($producto['nombre']); ?></h5>
+                <p class="card-text text-muted text-truncate"><?php echo htmlspecialchars($producto['descripcion']); ?></p>
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-primary">$<?php echo number_format($producto['precio'], 2); ?></span>
+                    <a href="pages/producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye me-1"></i> Ver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
+}
 
 function obtenerProductosDestacados($limite = 10) {
     global $conexion;
@@ -39,13 +85,10 @@ function obtenerProductosDestacados($limite = 10) {
 
 function agregarAlCarrito($productoId, $cantidad = 1) {
     global $conexion;
-    
     if (!isset($_SESSION['usuario_id'])) {
         return array('success' => false, 'message' => 'Debe iniciar sesión');
     }
-    
     $usuarioId = $_SESSION['usuario_id'];
-    
     $sql = "SELECT cantidad FROM carrito WHERE producto_id = ? AND usuario_id = ?";
     $stmt = mysqli_prepare($conexion, $sql);
     mysqli_stmt_bind_param($stmt, "ii", $productoId, $usuarioId);
@@ -67,16 +110,10 @@ function agregarAlCarrito($productoId, $cantidad = 1) {
         $exito = mysqli_stmt_execute($stmt);
         $mensaje = $exito ? 'Producto agregado al carrito' : 'Error al agregar producto';
     }
-    
     mysqli_stmt_close($stmt);
     return array('success' => $exito, 'message' => $mensaje);
 }
-/**
- * Obtener productos aleatorios por categoría
- * @param string|null $categoria Nombre de la categoría (o null/'todas' para cualquier categoría)
- * @param int $limite Cantidad de productos a retornar
- * @return array
- */
+
 function obtenerProductosAleatoriosPorCategoria($categoria = null, $limite = 4) {
     global $conexion;
 
@@ -98,10 +135,8 @@ function obtenerProductosAleatoriosPorCategoria($categoria = null, $limite = 4) 
     }
 
     if ($categoria && $categoria !== 'todas') {
-        // Bind category (string) and limit (int)
         mysqli_stmt_bind_param($stmt, "si", $categoria, $limite);
     } else {
-        // Only limit
         mysqli_stmt_bind_param($stmt, "i", $limite);
     }
 
@@ -118,9 +153,9 @@ function obtenerProductosAleatoriosPorCategoria($categoria = null, $limite = 4) 
 }
 
 function mostrarProductosDestacados() {
-
     global $usuario_id;
     $productos = obtenerProductosDestacados(10);
+    $favoritosIds = $usuario_id ? obtenerIdsFavoritos($usuario_id) : [];
     
     if (empty($productos)) {
         echo '<div class="col-12 text-center">';
@@ -130,39 +165,36 @@ function mostrarProductosDestacados() {
     }
     
     foreach ($productos as $producto) {
-        $favoritosIds = obtenerIdsFavoritos($usuario_id);
-        mostrarProducto($producto, $favoritosIds);
+        renderizarTarjetaInicio($producto, $favoritosIds);
     }
 }
 
 function mostrarProductosAleatorios(){
-
     global $usuario_id;
-    // Obtener todas las categorías y mostrar 4 productos aleatorios por cada una
-            $categorias = obtenerCategorias();
-            if (!empty($categorias)) {
-                // favoritos desde sesión
-                $favoritos = isset($_SESSION['favoritos']) ? $_SESSION['favoritos'] : [];
-                foreach ($categorias as $categoria) {
-                    $productosAleatorios = obtenerProductosAleatoriosPorCategoria($categoria, 4);
-                    echo '<div class="row mb-4">';
-                    echo '  <div class="col-12 mb-3">';
-                    echo '    <h3 class="h4">' . htmlspecialchars($categoria) . '</h3>';
-                    echo '  </div>';
+    $categorias = obtenerCategorias();
+    $favoritosIds = $usuario_id ? obtenerIdsFavoritos($usuario_id) : [];
 
-                    if (empty($productosAleatorios)) {
-                        echo '<div class="col-12 text-muted">No hay productos disponibles en esta categoría.</div>';
-                    } else {
-                        foreach ($productosAleatorios as $producto) {
-                            $favoritosIds = obtenerIdsFavoritos($usuario_id);
-                            mostrarProducto($producto, $favoritosIds);
-                        }
-                    }
+    if (!empty($categorias)) {
+        foreach ($categorias as $categoria) {
+            $productosAleatorios = obtenerProductosAleatoriosPorCategoria($categoria, 4);
+            echo '<div class="row mb-4">';
+            echo '  <div class="col-12 mb-3">';
+            echo '    <h3 class="h4 border-bottom pb-2">' . htmlspecialchars($categoria) . '</h3>';
+            echo '  </div>';
 
-                    echo '</div>'; // .row
-                }
+            if (empty($productosAleatorios)) {
+                echo '<div class="col-12 text-muted">No hay productos disponibles en esta categoría.</div>';
             } else {
-                echo '<div class="row"><div class="col-12 text-center text-muted">No hay categorías con productos disponibles.</div></div>';
-            }    
+                echo '<div class="row">'; 
+                foreach ($productosAleatorios as $producto) {
+                    renderizarTarjetaInicio($producto, $favoritosIds);
+                }
+                echo '</div>';
+            }
+            echo '</div>'; 
+        }
+    } else {
+        echo '<div class="row"><div class="col-12 text-center text-muted">No hay categorías con productos disponibles.</div></div>';
+    }    
 }
 ?>

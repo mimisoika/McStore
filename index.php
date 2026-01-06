@@ -259,4 +259,5 @@
     <script src="pages/js/favoritos.js" defer></script>
 
 </body>
+
 </html>
