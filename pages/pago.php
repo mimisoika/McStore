@@ -137,9 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevoPedido'])) {
                             <i class="fas fa-map-marker-alt fs-1 text-muted mb-3"></i>
                             <h5 class="text-muted">No tienes direcciones registradas</h5>
                             <p class="text-muted">Agrega tu primera dirección para realizar pedidos</p>
-                            <button class="btn btn-primary" href="perfil.php">
+                            <a href="perfil.php" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Agregar Dirección
-                            </button>
+                            </a>
                         </div>
                     <?php else: ?>
                         <div class="row">
