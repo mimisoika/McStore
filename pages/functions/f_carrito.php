@@ -168,7 +168,8 @@ function calcularTotales($conexion, $usuario_id) {
     $row = $resultado->fetch_assoc();
     
     $subtotal = $row['subtotal'] ?? 0;
-    $envio = 150.00; 
+    // El envío solo se cobra si hay productos en el carrito
+    $envio = ($subtotal > 0) ? 150.00 : 0.00; 
     $iva = $subtotal * 0.16; 
     $total = $subtotal + $envio + $iva;
     
@@ -275,6 +276,16 @@ function generarHTMLResumenPedido($totales) {
     </ul>
     <hr>
     <p class="d-flex justify-content-between"><strong>Total: <span>$' . number_format($totales['total'], 2) . '</span></strong></p>';
+}
+
+function generarHTMLCarritoVacio() {
+    return '
+    <div class="alert alert-info text-center mb-4">
+        <p class="mb-3"><i class="fas fa-shopping-cart fa-2x"></i></p>
+        <p class="mb-3">Tu carrito está vacío</p>
+        <p class="text-muted small mb-3">Agrega productos para ver el resumen de tu compra</p>
+        <a href="catalogo.php" class="btn btn-primary w-100"><i class="fas fa-plus"></i> Agregar Productos</a>
+    </div>';
 }
 
 function verificarSesionUsuario() {

@@ -66,14 +66,22 @@ manejarAccionesCarrito();
                     <div class="card-body" id="resumen-pedido">
                         <?php
                         if (verificarSesionUsuario()) {
-                            $totales = calcularTotales($conexion, $_SESSION['usuario_id']);
-                            echo generarHTMLResumenPedido($totales);
+                            $usuario_id = $_SESSION['usuario_id'];
+                            $productos = obtenerProductosCarrito($conexion, $usuario_id);
+                            
+                            if (empty($productos)) {
+                                // Carrito vacío
+                                echo generarHTMLCarritoVacio();
+                            } else {
+                                // Carrito con productos
+                                $totales = calcularTotales($conexion, $usuario_id);
+                                echo generarHTMLResumenPedido($totales);
+                                echo '<a href="pago.php" class="btn btn-warning w-100">Proceder al Pago</a>';
+                            }
                         } else {
                             echo '<p class="text-muted">Inicia sesión para ver el resumen</p>';
                         }
                         ?>
-                        <a href="pago.php" class="btn btn-warning w-100"> Procededer al Pago</a>';
-
                     </div>
                 </div>
             </div>
