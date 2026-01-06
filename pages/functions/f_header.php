@@ -36,7 +36,7 @@ function generarMenuUsuario() {
         return '<ul class="dropdown-menu dropdown-menu-end">' .
                '<li><h6 class="dropdown-header"><i class="bi bi-person-badge me-2"></i>Mi Cuenta</h6></li>' .
                '<li><a class="dropdown-item" href="' . $prefix . 'login.php"><i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión</a></li>' .
-               '<li><a class="dropdown-item" href="' . $prefix . 'login.php#registro"><i class="bi bi-person-plus me-2"></i>Registrarse</a></li>' .
+               '<li><a class="dropdown-item" href="' . $prefix . 'login.php#register"><i class="bi bi-person-plus me-2"></i>Registrarse</a></li>' .
                '</ul>';
     }
 }

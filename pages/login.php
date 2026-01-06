@@ -20,6 +20,22 @@
           integrity=""
           referrerpolicy="no-referrer"
           media="all">
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const hash = window.location.hash;
+
+        if (hash === "#register") {
+            const registerTab = document.querySelector("#register-tab");
+            if (registerTab) {
+                const tab = new bootstrap.Tab(registerTab);
+                tab.show();
+            }
+        }
+
+    });
+    </script>
+
 </head>
 <body>
     <div class="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
