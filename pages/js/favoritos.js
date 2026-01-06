@@ -45,6 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         icono.classList.remove("fa-solid", "text-danger");
                         icono.classList.add("fa-regular");
                     }
+                }else{
+                    location.href = baseURL + "login.php";
                 }
             });
 
