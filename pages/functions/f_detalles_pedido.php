@@ -28,10 +28,30 @@ function obtenerDetallesPedido($pedido_id) {
                 </div>';
     }
 
-    // Calcular total
-    $total_pedido = 0;
+    // Calcular subtotal
+    $subtotal = 0;
     foreach ($detalles as $detalle) {
-        $total_pedido += $detalle['total'];
+        $subtotal += $detalle['total'];
+    }
+
+    // Obtener el total del pedido desde la BD
+    $sql_pedido = "SELECT total FROM pedidos WHERE id = ?";
+    $stmt_pedido = $conexion->prepare($sql_pedido);
+    $stmt_pedido->bind_param("i", $pedido_id);
+    $stmt_pedido->execute();
+    $result_pedido = $stmt_pedido->get_result();
+    $row_pedido = $result_pedido->fetch_assoc();
+    $total_pedido = $row_pedido['total'] ?? 0;
+    $stmt_pedido->close();
+
+    // Calcular envío e IVA
+    $envio = 150.00;
+    $iva = $subtotal * 0.16;
+    
+    // Si el total es 0, significa que el carrito estaba vacío, así que no hay envío
+    if ($total_pedido == 0) {
+        $envio = 0;
+        $iva = 0;
     }
 
     // Generar tabla HTML
@@ -57,14 +77,32 @@ function obtenerDetallesPedido($pedido_id) {
     }
 
     $html .= '</tbody>
-                <tfoot class="table-secondary">
-                    <tr>
-                        <td colspan="3" class="text-end fw-bold">Total del Pedido:</td>
-                        <td class="text-end fw-bold text-success">$' . number_format($total_pedido, 2) . '</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>';
+                </table>
+            </div>';
+
+    // Agregar resumen del pedido
+    $html .= '<div class="mt-4">
+                <h6>Resumen del Pedido</h6>
+                <ul class="list-unstyled">
+                    <li class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span>$' . number_format($subtotal, 2) . '</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span>Envío:</span>
+                        <span>$' . number_format($envio, 2) . '</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span>IVA (16%):</span>
+                        <span>$' . number_format($iva, 2) . '</span>
+                    </li>
+                </ul>
+                <hr>
+                <p class="d-flex justify-content-between">
+                    <strong>Total del Pedido:</strong>
+                    <strong class="text-success">$' . number_format($total_pedido, 2) . '</strong>
+                </p>
+            </div>';
 
     return $html;
 }
